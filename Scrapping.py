@@ -2,43 +2,66 @@ import requests
 from bs4 import BeautifulSoup
 import csv
 
-# class Livre():
-#     def __init__(self):
-#         self.title = ""
-#         self.universal_product_code = "[]"
-#         self.price_including_tax = 0
-#         self.price_excluding_tax = 0
-#         self.number_available = 0
-#         self.product_description = ""
-#         self.category = ""
-#         self.review_rating = 0
-#         self.image_url = ""
 
-title = []
-universal_product_code = []
-price_including_tax = []
-price_excluding_tax = []
-number_available = []
-product_description = []
-category = []
-review_rating = []
-image_url = []
-product_page_url = []
+def scrape_categories():
+    # Scrapping Categories
+    category_list = []
+    category_url = []
+    iteration = 2
 
-
-# Scrapping page principale
-url = "http://books.toscrape.com/"
-page = requests.get(url)
-soup = BeautifulSoup(page.content,'html.parser')
-livres_soup = soup.find_all("h3")
-for i in livres_soup:
-    a = i.find("a")
-    link = a["href"]
-    product_page_url.append(url + link)
-
-def scrape(url):
+    url = "http://books.toscrape.com/"
     page = requests.get(url)
     soup = BeautifulSoup(page.content,'html.parser')
+    nav_soup = soup.find("ul", class_="nav nav-list")
+    list = nav_soup.find_all("li")
+    for i in list:
+        a = i.find("a")
+        for y in a :
+            fixed_y = y.strip().lower()
+            category_list.append(fixed_y)
+    category_list.pop(0)
+
+    for i in category_list:
+        link = "http://books.toscrape.com/catalogue/category/books/{}_{}/index.html".format(i,iteration)
+        iteration += 1
+        category_url.append(link)
+
+    return category_list, category_url
+
+def scrape_url(): 
+    categories = scrape_categories()
+    # Scrapping URL produit
+    books_url = []
+    for i in categories[1]:
+        page = requests.get(i)
+        soup = BeautifulSoup(page.content,"html.parser")
+        livres_soup = soup.find_all("h3")
+        for i in livres_soup:
+            a = i.find("a")
+            link = a["href"]
+            final_link =  + link
+            books_url.append(final_link)
+    
+    print(books_url)
+    
+    return books_url
+
+def scrape(lien):
+
+    title = []
+    universal_product_code = []
+    price_including_tax = []
+    price_excluding_tax = []
+    number_available = []
+    product_description = []
+    category = []
+    review_rating = []
+    image_url = []
+    product_page_url = []
+
+    page = requests.get(lien)
+    soup = BeautifulSoup(page.content,'html.parser')
+    
     # Scrapping du titre
     titre = soup.find_all("h1")
     for titres in titre:
@@ -102,10 +125,9 @@ def scrape(url):
     lien_image = "http://books.toscrape.com/" + fixed_img
     image_url.append(lien_image)
 
-# Création CSV
-def csv_file():
+    # Création CSV
     en_tete = ["titre","upc","ht","ttc","stock","description","categorie","rating","img","url"]
-    with open('D:\Dev\_OpenClassRooms\Projet_2\Livres.csv',"w") as livre_csv:
+    with open('D:\Dev\_OpenClassRooms\Projet_2\{}.csv'.format(category),"w") as livre_csv:
         writer = csv.writer(livre_csv,delimiter =",")
         writer.writerow(en_tete)
 
@@ -114,8 +136,12 @@ def csv_file():
         product_description,category,review_rating,image_url,product_page_url):
             writer.writerow([titre,upc,ht,ttc,stock,description,categorie,rating,img,url])
 
-if __name__ == '__main__':
-    for liens in product_page_url:
-        scrape(liens)
+scrape_url()
 
-    csv_file()
+# for lien in url:
+#     scrape(lien)
+
+
+# if __name__ == '__main__':
+#     for url,categorie in zip (category_url,category_list):
+#         scrape(url,categorie)
