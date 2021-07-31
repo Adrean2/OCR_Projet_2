@@ -1,6 +1,7 @@
 import requests
 import csv
 import re
+import os
 
 def scrape_categories():
     # Scrapping Categories
@@ -110,6 +111,21 @@ def scrape(lien,category):
 
     image_url = lien_image
 
+    #Création du dossier d'images
+    directory = category + "_images"
+    parent_dir ="D:\Dev\_OpenClassRooms\Projet_2"
+    path = os.path.join(parent_dir,directory)
+    if not os.path.exists(path):
+        os.mkdir(path)
+    os.chmod(path,0o777)
+
+    #Enregistrement des images dans le bon répertoire
+    image_request = requests.get(image_url)
+    if image_request.status_code == 200:
+        img_title = re.sub(r'[^\w_.)( -]',"", title)
+        with open(path +"\{}.jpg".format(img_title),'wb') as f:
+            f.write(image_request.content)
+
     #Ajout des informations dans les CSV correspondants#
     books_stats = [title,universal_product_code,price_excluding_tax,price_including_tax,number_available,product_description,category,review_rating,image_url,product_page_url]
     with open('D:\Dev\_OpenClassRooms\Projet_2\{}.csv'.format(str(category)),"a",encoding="UTF-8") as livre_csv:
@@ -128,7 +144,7 @@ def create_csv(category):
             with open('D:\Dev\_OpenClassRooms\Projet_2\{}.csv'.format(str(i)),"w",encoding="UTF-8") as livre_csv:
                 write = csv.writer(livre_csv)
                 write.writerow(en_tete)
-            
+
 def main():
 
     #Renvoie une liste des liens et une liste des noms de chaque catégorie du site#
@@ -137,12 +153,24 @@ def main():
     noms_categories = categorie[1]
 
     #Choix de l'index qui sera scrappé dans chaque liste#
-    index = 8
-    #Créer un csv pour les catégories que l'on souhaite#
-    create_csv(noms_categories[index])
-    #Renvoie une liste de tous les liens de livre des catégories spécifiés #
-    liens_livres = scrape_url(liens_categories[index])
-    for lien in liens_livres:
-        scrape(lien,noms_categories[index])
-
+    choix = input("Choisissez le(s) index à traiter (format slice -> index:index) : ")
+    index = 0
+    if ":" in choix :
+        index_split = choix.split(":")
+        index = slice(int(index_split[0]),int(index_split[1]))
+    else:
+        index = int(choix)
+    #Permet de scrape les catégories choisies dans une slice
+    if type(index) == slice:
+        liens_to_scrape = liens_categories[index]
+        noms_cat = noms_categories[index]
+        for liens,noms in zip (liens_to_scrape,noms_cat):
+            liens_livres = scrape_url(liens)
+            for lien in liens_livres:
+                scrape(lien,noms)
+    # Permet de scrape une unique catégorie
+    else:
+        liens_livres = scrape_url(liens_categories[index])
+        for lien in liens_livres:
+            scrape(lien,noms_categories[index])
 main()
