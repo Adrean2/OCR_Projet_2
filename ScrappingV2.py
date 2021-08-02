@@ -173,4 +173,6 @@ def main():
         liens_livres = scrape_url(liens_categories[index])
         for lien in liens_livres:
             scrape(lien,noms_categories[index])
-main()
+            
+if __name__ == '__main__':
+    main()
