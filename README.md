@@ -13,7 +13,7 @@ La syntaxe à utiliser est la suivante:
 Une seule catégorie -> index
 Plusieurs catégories -> index:index
 ```
-L'**INDEX** doit être un **NOMBRE** entre **0** et **52**
+L'**INDEX** doit être un **NOMBRE** entre **0** et **52**.
 Pour **scraper le site entier** il faudra écrire **0:52**.
 
 ## Exemples
