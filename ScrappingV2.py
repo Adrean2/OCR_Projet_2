@@ -82,10 +82,10 @@ def scrape(lien,category):
 
     #Scraping UPC#
     universal_product_code = tableau[0]
-    stock_pattern = re.compile(r"\d+")
-    stock = stock_pattern.findall(tableau[5])
 
     #Scraping stock#
+    stock_pattern = re.compile(r"\d+")
+    stock = stock_pattern.findall(tableau[5])
     number_available = stock[0]
 
     #Scrapping de la description#
@@ -133,11 +133,15 @@ def scrape(lien,category):
         writer.writerow(books_stats)
 
 def create_csv(category):
+    # Modulable pour une ou plusieurs catégories
+    ## Si la catégorie est unique
     if type(category) == str :
         en_tete = ["titre","upc","ht","ttc","stock","description","categorie","rating","img","url"]
         with open('D:\Dev\_OpenClassRooms\Projet_2\{}.csv'.format(str(category)),"w",encoding="UTF-8") as livre_csv:
             write = csv.writer(livre_csv)
             write.writerow(en_tete)
+
+    # Si il y a plusieurs catégories à scrape
     else:
         for i in category:
             en_tete = ["titre","upc","ht","ttc","stock","description","categorie","rating","img","url"]
@@ -147,12 +151,12 @@ def create_csv(category):
 
 def main():
 
-    #Renvoie une liste des liens et une liste des noms de chaque catégorie du site#
+    #Renvoie une liste des liens et une liste des noms de chaque catégorie du site
     categorie = scrape_categories()
     liens_categories = categorie[0]
     noms_categories = categorie[1]
 
-    #Choix de l'index qui sera scrappé dans chaque liste#
+    #Choix de l'index qui sera scrappé dans chaque liste
     choix = input("Choisissez le(s) index à traiter (format slice -> index:index) : ")
     index = 0
     if ":" in choix :
@@ -165,11 +169,13 @@ def main():
         liens_to_scrape = liens_categories[index]
         noms_cat = noms_categories[index]
         for liens,noms in zip (liens_to_scrape,noms_cat):
+            create_csv(noms)
             liens_livres = scrape_url(liens)
             for lien in liens_livres:
                 scrape(lien,noms)
     # Permet de scrape une unique catégorie
     else:
+        create_csv(noms_categories[index])
         liens_livres = scrape_url(liens_categories[index])
         for lien in liens_livres:
             scrape(lien,noms_categories[index])
