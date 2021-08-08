@@ -2,6 +2,9 @@ import requests
 import csv
 import re
 import os
+from pathlib import Path
+
+absolute_path = Path(__file__).absolute().parent
 
 def scrape_categories():
     # Scrapping Categories
@@ -38,7 +41,9 @@ def scrape_url(lien):
     #Vérifie si la catégorie a plusieurs page#
     running = True
     while running == True:
-        if page.status_code == 200:
+        page_pattern = re.compile(r"class\=\"next")
+        page_match = page_pattern.findall(page.text)
+        if len(page_match) != 0 or page_count == 1:
             if page_count != 1:
                 fixed_lien = lien.replace("index","page-{}".format(page_count))
             else:
@@ -113,8 +118,7 @@ def scrape(lien,category):
 
     #Création du dossier d'images
     directory = category + "_images"
-    parent_dir ="D:\Dev\_OpenClassRooms\Projet_2"
-    path = os.path.join(parent_dir,directory)
+    path = absolute_path / directory
     if not os.path.exists(path):
         os.mkdir(path)
     os.chmod(path,0o777)
@@ -123,12 +127,12 @@ def scrape(lien,category):
     image_request = requests.get(image_url)
     if image_request.status_code == 200:
         img_title = re.sub(r'[^\w_.)( -]',"", title)
-        with open(path +"\{}.jpg".format(img_title),'wb') as f:
+        with open(path / '{}.jpg'.format(img_title),'wb') as f:
             f.write(image_request.content)
 
     #Ajout des informations dans les CSV correspondants#
     books_stats = [title,universal_product_code,price_excluding_tax,price_including_tax,number_available,product_description,category,review_rating,image_url,product_page_url]
-    with open('D:\Dev\_OpenClassRooms\Projet_2\{}.csv'.format(str(category)),"a",encoding="UTF-8") as livre_csv:
+    with open(absolute_path /'{}.csv'.format(str(category)),"a",encoding="UTF-8") as livre_csv:
         writer = csv.writer(livre_csv)
         writer.writerow(books_stats)
 
@@ -137,7 +141,7 @@ def create_csv(category):
     ## Si la catégorie est unique
     if type(category) == str :
         en_tete = ["titre","upc","ht","ttc","stock","description","categorie","rating","img","url"]
-        with open('D:\Dev\_OpenClassRooms\Projet_2\{}.csv'.format(str(category)),"w",encoding="UTF-8") as livre_csv:
+        with open(absolute_path / '{}.csv'.format(str(category)),"w",encoding="UTF-8") as livre_csv:
             write = csv.writer(livre_csv)
             write.writerow(en_tete)
 
@@ -145,7 +149,7 @@ def create_csv(category):
     else:
         for i in category:
             en_tete = ["titre","upc","ht","ttc","stock","description","categorie","rating","img","url"]
-            with open('D:\Dev\_OpenClassRooms\Projet_2\{}.csv'.format(str(i)),"w",encoding="UTF-8") as livre_csv:
+            with open(absolute_path / '{}.csv'.format(str(i)),"w",encoding="UTF-8") as livre_csv:
                 write = csv.writer(livre_csv)
                 write.writerow(en_tete)
 
